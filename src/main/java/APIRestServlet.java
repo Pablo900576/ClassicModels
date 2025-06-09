@@ -77,13 +77,13 @@ public class APIRestServlet extends HttpServlet {
 	
 	static void listar(PrintWriter out) {
 		Connection con = null;
-		PreparedStatement stm = null;
+		PreparedStatement statement = null;
 		ResultSet rs = null;
 		try {
 			Context context = new InitialContext();
 			DataSource ds = (DataSource) context.lookup("java:comp/env/jdbc/contactos");
 			con = ds.getConnection();
-			PreparedStatement statement = con.prepareStatement("select * from telefonos");
+			statement = con.prepareStatement("select * from telefonos");
 			rs= statement.executeQuery();
 			Map<String, List<String>> contactos= new HashMap<>();
 			while(rs.next()) {
@@ -114,9 +114,9 @@ public class APIRestServlet extends HttpServlet {
 				} catch (SQLException e) {
 				}
 			}
-			if (stm != null) {
+			if (statement != null) {
 				try {
-					stm.close();
+					statement.close();
 				} catch (SQLException e) {
 				}
 			}
@@ -129,16 +129,131 @@ public class APIRestServlet extends HttpServlet {
 			}
 		
 	}
+	static void borrarC(String nombre, PrintWriter out) {
+		Connection con = null;
+		PreparedStatement statement = null;
+		ResultSet rs = null;
+		try {
+			Context context = new InitialContext();
+			DataSource ds = (DataSource) context.lookup("java:comp/env/jdbc/contactos");
+			con = ds.getConnection();
+			statement = con.prepareStatement("delete from ");
+			statement.setString(1, nombre);
+			rs = statement.executeQuery();
+			while (rs.next())
+				out.println(rs.getString(1));
+		} catch (NamingException | SQLException e) {
+			e.printStackTrace();
+		} finally {
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+				}
+			}
+			if (statement != null) {
+				try {
+					statement.close();
+				} catch (SQLException e) {
+				}
+			}
+			if (con != null) {
+				try {
+					con.close();
+				} catch (SQLException e) {
+				}
+			}
+		}
+	}
+	
+	static void borrarT(String telefono, PrintWriter out) {
+		Connection con = null;
+		PreparedStatement statement = null;
+		
+		try {
+			Context context = new InitialContext();
+			DataSource ds = (DataSource) context.lookup("java:comp/env/jdbc/contactos");
+			con = ds.getConnection();
+			statement = con.prepareStatement("delete from telefonos where numero = ?");
+			statement.setString(1, telefono);
+			int rs = statement.executeUpdate();
+			if (rs>0) {
+				out.println("Eliminado correctamente el telefono: "+ telefono);
+			}else {
+				out.println("Error al intentar eliminar el telefono");
+			}
+					
+		} catch (NamingException | SQLException e) {
+			e.printStackTrace();
+		} finally {
+			if (statement != null) {
+				try {
+					statement.close();
+				} catch (SQLException e) {
+				}
+			}
+			if (con != null) {
+				try {
+					con.close();
+				} catch (SQLException e) {
+				}
+			}
+		}
+	}
+	
 
 	@Override
-	protected void doPost(HttpServletRequest request, HttpServletResponse response)
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
+		Connection con = null;
+		PreparedStatement statement = null;
+		try {
+		String sql= "INSERT INTO telefonos(numero, contacto) VALUES (?, ?)";
+		resp.setContentType("text/plain");
+		String nombre= req.getParameter("nombre");
+		String telefono= req.getParameter("telefono");
+		PrintWriter out = new PrintWriter(resp.getWriter());
 		
+		
+		 if(nombre !=null && telefono != null) {
+			 Context context = new InitialContext();
+				DataSource ds = (DataSource) context.lookup("java:comp/env/jdbc/contactos");
+				 con = ds.getConnection();
+				 statement = con.prepareStatement(sql);
+				statement.setString(1, telefono);
+				statement.setString(2, nombre);
+				
+			 int rs = statement.executeUpdate();
+				if (rs>0) {
+					out.println("Añadido correctamente el contacto: "+ nombre+"\nCon el numero de telefono: "+telefono);
+				}else {
+					out.println("Error al intentar añadir el contacto");
+				}
+		 }else {
+			 out.println("Error al recibir el nombre y telefono");
+		 }
+		} catch (NamingException | SQLException e) {
+			e.printStackTrace();
+		} finally {
+			if (statement != null) {
+				try {
+					statement.close();
+				} catch (SQLException e) {
+				}
+			}
+			if (con != null) {
+				try {
+					con.close();
+				} catch (SQLException e) {
+				}
+			}
+		}
 	}
 	
 	@Override
-	protected void doDelete(HttpServletRequest request, HttpServletResponse response)
+	protected void doDelete(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
+		
 		
 	}
 
