@@ -51,6 +51,7 @@ public class APIRestServlet extends HttpServlet {
 			rs = statement.executeQuery();
 			while (rs.next())
 				out.println(rs.getString(1));
+			out.flush();
 		} catch (NamingException | SQLException e) {
 			e.printStackTrace();
 		} finally {
@@ -132,25 +133,33 @@ public class APIRestServlet extends HttpServlet {
 	static void borrarC(String nombre, PrintWriter out) {
 		Connection con = null;
 		PreparedStatement statement = null;
-		ResultSet rs = null;
+
 		try {
 			Context context = new InitialContext();
 			DataSource ds = (DataSource) context.lookup("java:comp/env/jdbc/contactos");
 			con = ds.getConnection();
-			statement = con.prepareStatement("delete from ");
+			statement = con.prepareStatement("delete from telefonos where contacto = ?");
 			statement.setString(1, nombre);
-			rs = statement.executeQuery();
-			while (rs.next())
-				out.println(rs.getString(1));
+			int rs = statement.executeUpdate();
+			if (rs>0) {
+				out.println("Eliminado correctamente los telefonos de: "+ nombre);
+			}else {
+				out.println("Error al intentar eliminar los telefonos del contacto");
+			}
+			//PARA ELIMINAR TAMBIEN DE LA TABLA CONTACTOS PERO NO TENGO IMPLEMENTADO UN METODO PARA AÑADIR A LA TABLA CONTACTOS ENTONCES DARIA PROBLEMAS
+			/*statement = con.prepareStatement("delete from contactos where nombre = ?");
+			statement.setString(1, nombre);
+			rs=statement.executeUpdate();
+			if (rs>0) {
+				out.println("Eliminado correctamente el contacto de: "+ nombre);
+			}else {
+				out.println("Error al intentar eliminar el contacto");
+			}
+			*/
 		} catch (NamingException | SQLException e) {
 			e.printStackTrace();
 		} finally {
-			if (rs != null) {
-				try {
-					rs.close();
-				} catch (SQLException e) {
-				}
-			}
+			
 			if (statement != null) {
 				try {
 					statement.close();
@@ -174,6 +183,7 @@ public class APIRestServlet extends HttpServlet {
 			Context context = new InitialContext();
 			DataSource ds = (DataSource) context.lookup("java:comp/env/jdbc/contactos");
 			con = ds.getConnection();
+			
 			statement = con.prepareStatement("delete from telefonos where numero = ?");
 			statement.setString(1, telefono);
 			int rs = statement.executeUpdate();
@@ -182,6 +192,7 @@ public class APIRestServlet extends HttpServlet {
 			}else {
 				out.println("Error al intentar eliminar el telefono");
 			}
+			out.flush();
 					
 		} catch (NamingException | SQLException e) {
 			e.printStackTrace();
@@ -232,6 +243,7 @@ public class APIRestServlet extends HttpServlet {
 		 }else {
 			 out.println("Error al recibir el nombre y telefono");
 		 }
+		 out.flush();
 		} catch (NamingException | SQLException e) {
 			e.printStackTrace();
 		} finally {
@@ -253,8 +265,15 @@ public class APIRestServlet extends HttpServlet {
 	@Override
 	protected void doDelete(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
-		
-		
+		resp.setContentType("text/plain");
+		String val;
+		PrintWriter out = new PrintWriter(resp.getWriter());
+		if ((val = req.getParameter("borrarTelefono")) != null)
+			borrarT(val, out);			
+		else if ((val = req.getParameter("borrarContacto")) != null)
+			borrarC(val, out);
+		out.flush();
 	}
-
+	
+	
 }
